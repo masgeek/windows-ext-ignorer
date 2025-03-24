@@ -9,18 +9,16 @@ use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreCommandRunEvent;
 
-class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterface
+class Plugin implements PluginInterface, EventSubscriberInterface
 {
     protected Composer $composer;
     protected IOInterface $io;
 
-    /**
-     * Extensions to fake on Windows
-     */
-    protected array $ignoredExtensions = [
+    protected array $defaultIgnoredExtensions = [
         'ext-pcntl' => '1.0.0',
         'ext-posix' => '1.0.0',
     ];
+    protected array $ignoredExtensions = [];
 
     public function activate(Composer $composer, IOInterface $io): void
     {
@@ -42,6 +40,12 @@ class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterfa
         ];
     }
 
+    /**
+     * Event listener for Composer's PRE_COMMAND_RUN event.
+     *
+     * @see getSubscribedEvents() for registration
+     *
+     */
     public function onPreCommandRun(PreCommandRunEvent $event): void
     {
         if (!$this->isWindows()) {
@@ -50,6 +54,9 @@ class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterfa
 
         $command = $event->getCommand();
         $this->io->write("<info>➡️  Running Composer Command: $command</info>");
+
+        // Get merged extensions (defaults + composer.json extra)
+        $this->ignoredExtensions = $this->getIgnoredExtensionsFromComposerJson();
 
         $this->applyPlatformOverrides();
     }
@@ -81,14 +88,30 @@ class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterfa
         $this->io->write("<info>✅ Platform config updated to spoof missing extensions.</info>");
     }
 
-    public function deactivate(Composer $composer, IOInterface $io)
+    public function deactivate(Composer $composer, IOInterface $io): void
     {
-        // no-op
+        $this->io->write("<comment>WindowsExtIgnorerPlugin deactivated.</comment>");
     }
 
-    public function uninstall(Composer $composer, IOInterface $io)
+    public function uninstall(Composer $composer, IOInterface $io): void
     {
-        // no-op
+        $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
+    }
+
+    /**
+     * Reads `extra` config from composer.json and merges it with defaults.
+     */
+    protected function getIgnoredExtensionsFromComposerJson(): array
+    {
+        $extraConfig = $this->composer->getPackage()->getExtra();
+        $composerJsonExtensions = [];
+
+        if (!empty($extraConfig['ignored-extensions'])) {
+            $composerJsonExtensions = $extraConfig['ignored-extensions'];
+            $this->io->write("<comment>🔧 Found ignored-extensions in composer.json:</comment> " . json_encode($composerJsonExtensions));
+        }
+
+        return array_merge($this->defaultIgnoredExtensions, $composerJsonExtensions);
     }
 
     private function isWindows(): bool
