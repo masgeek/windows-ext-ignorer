@@ -1,90 +1,62 @@
-# whoops
-PHP errors for cool kids
+# Windows Extension Ignorer for Composer
 
-[![Total Downloads](https://img.shields.io/packagist/dm/filp/whoops.svg)](https://packagist.org/packages/filp/whoops)
-[![Latest Version](http://img.shields.io/packagist/v/filp/whoops.svg)](https://packagist.org/packages/filp/whoops)
-[![Reference Status](https://www.versioneye.com/php/filp:whoops/reference_badge.svg?style=flat)](https://www.versioneye.com/php/filp:whoops/references)
-[![Dependency Status](https://www.versioneye.com/php/filp:whoops/1.1.5/badge.svg)](https://www.versioneye.com/php/filp:whoops/1.1.5)
-[![Build Status](https://travis-ci.org/filp/whoops.svg?branch=master)](https://travis-ci.org/filp/whoops)
-[![Scrutinizer Quality Score](https://scrutinizer-ci.com/g/filp/whoops/badges/quality-score.png?s=6225c36f2a2dd1fdca11ecc7b10b29105c8c62bd)](https://scrutinizer-ci.com/g/filp/whoops)
-[![Code Coverage](https://scrutinizer-ci.com/g/filp/whoops/badges/coverage.png?s=711feb2069144d252d111b211965ffb19a7d09a8)](https://scrutinizer-ci.com/g/filp/whoops)
+A Composer plugin that automatically ignores `ext-pcntl` and `ext-posix` platform requirements on Windows systems.
 
------
+## The Problem
 
-![Whoops!](http://i.imgur.com/0VQpe96.png)
+Many PHP packages require extensions like `ext-pcntl` and `ext-posix` which are not available on Windows. This forces Windows users to:
 
-**whoops** is an error handler framework for PHP. Out-of-the-box, it provides a pretty
-error interface that helps you debug your web projects, but at heart it's a simple yet
-powerful stacked error handling system.
+1. Manually add the `--ignore-platform-reqs` flag to every Composer command
+2. Set up command aliases
+3. Modify their `composer.json` to exclude these requirements
 
-## Features
+## The Solution
 
-- Flexible, stack-based error handling
-- Stand-alone library with (currently) no required dependencies
-- Simple API for dealing with exceptions, trace frames & their data
-- Includes a pretty rad error page for your webapp projects
-- Includes the ability to [open referenced files directly in your editor and IDE](docs/Open%20Files%20In%20An%20Editor.md)
-- Includes handlers for different response formats (JSON, XML, SOAP)
-- Easy to extend and integrate with existing libraries
-- Clean, well-structured & tested code-base
+This plugin automatically detects when you're on a Windows system and ignores the `ext-pcntl` and `ext-posix` platform requirements for you. No manual flags or aliases needed!
 
-## Sponsors
+## Installation
 
-<a href="https://blackfire.io/docs/introduction?utm_source=whoops&amp;utm_medium=github_readme&amp;utm_campaign=logo"><img src="https://i.imgur.com/zR8rsqk.png" alt="Blackfire.io" width="254" height="64"></a>
+```bash
+composer require masgeek/windows-ext-ignorer
+```
 
-## Installing
-If you use Laravel 4 or Laravel 5.5+, you already have Whoops. There are also community-provided instructions on how to integrate Whoops into
-[Silex 1](https://github.com/whoops-php/silex-1),
-[Silex 2](https://github.com/texthtml/whoops-silex),
-[Phalcon](https://github.com/whoops-php/phalcon),
-[Laravel 3](https://gist.github.com/hugomrdias/5169713#file-start-php),
-[Laravel 5](https://github.com/GrahamCampbell/Laravel-Exceptions),
-[CakePHP 2](https://github.com/oldskool/WhoopsCakephp/tree/cake2),
-[CakePHP 3](https://github.com/oldskool/WhoopsCakephp),
-[Zend 2](https://github.com/ghislainf/zf2-whoops),
-[Zend 3](https://github.com/Ppito/zf3-whoops),
-[Yii 1](https://github.com/igorsantos07/yii-whoops),
-[FuelPHP](https://github.com/indigophp/fuel-whoops),
-[Slim](https://github.com/zeuxisoo/php-slim-whoops/),
-[Pimple](https://github.com/texthtml/whoops-pimple),
-[Laminas](https://github.com/Ppito/laminas-whoops),
-or any framework consuming [StackPHP middlewares](https://github.com/thecodingmachine/whoops-stackphp)
-or [PSR-7 middlewares](https://github.com/franzliedke/whoops-middleware).
+## Usage
 
-If you are not using any of these frameworks, here's a very simple way to install:
+Once installed, the plugin works automatically. When running Composer commands on a Windows system:
 
-1. Use [Composer](http://getcomposer.org) to install Whoops into your project:
+1. The plugin detects you're on Windows
+2. It automatically removes `ext-pcntl` and `ext-posix` from the platform requirements
+3. You can install packages normally without seeing errors about missing extensions
 
-    ```bash
-    composer require filp/whoops
-    ```
+## Verbose Output
 
-1. Register the pretty handler in your code:
+If you want to see when the plugin is active, run your Composer commands with the `-v` flag:
 
-    ```php
-    $whoops = new \Whoops\Run;
-    $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
-    $whoops->register();
-    ```
+```bash
+composer require some/package -v
+```
 
-For more options, have a look at the **example files** in `examples/` to get a feel for how things work. Also take a look at the [API Documentation](docs/API%20Documentation.md) and the list of available handlers below.
+You'll see messages like:
 
-You may also want to override some system calls Whoops does. To do that, extend `Whoops\Util\SystemFacade`, override functions that you want and pass it as the argument to the `Run` constructor.
+```
+WindowsExtIgnorer: Automatically ignoring ext-pcntl requirement on Windows
+WindowsExtIgnorer: Automatically ignoring ext-posix requirement on Windows
+WindowsExtIgnorer: Platform requirements modified for Windows
+```
 
-### Available Handlers
+## How It Works
 
-**whoops** currently ships with the following built-in handlers, available in the `Whoops\Handler` namespace:
+The plugin:
 
-- [`PrettyPageHandler`](https://github.com/filp/whoops/blob/master/src/Whoops/Handler/PrettyPageHandler.php) - Shows a pretty error page when something goes pants-up
-- [`PlainTextHandler`](https://github.com/filp/whoops/blob/master/src/Whoops/Handler/PlainTextHandler.php) - Outputs plain text message for use in CLI applications
-- [`CallbackHandler`](https://github.com/filp/whoops/blob/master/src/Whoops/Handler/CallbackHandler.php) - Wraps a closure or other callable as a handler. You do not need to use this handler explicitly, **whoops** will automatically wrap any closure or callable you pass to `Whoops\Run::pushHandler`
-- [`JsonResponseHandler`](https://github.com/filp/whoops/blob/master/src/Whoops/Handler/JsonResponseHandler.php) - Captures exceptions and returns information on them as a JSON string. Can be used to, for example, play nice with AJAX requests.
-- [`XmlResponseHandler`](https://github.com/filp/whoops/blob/master/src/Whoops/Handler/XmlResponseHandler.php) - Captures exceptions and returns information on them as a XML string. Can be used to, for example, play nice with AJAX requests.
+1. Subscribes to Composer's `pre-pool-create` event
+2. Checks if the current system is Windows
+3. If on Windows, it removes the specified extensions from the platform repository
+4. This allows packages that require these extensions to install normally
 
-You can also use pluggable handlers, such as [SOAP handler](https://github.com/whoops-php/soap).
+## Customization
 
-## Authors
+If you want to ignore additional extensions, you can fork this plugin and modify the `$ignoredExtensions` array in the `WindowsExtIgnorerPlugin` class.
 
-This library was primarily developed by [Filipe Dobreira](https://github.com/filp), and is currently maintained by [Denis Sokolov](https://github.com/denis-sokolov). A lot of awesome fixes and enhancements were also sent in by [various contributors](https://github.com/filp/whoops/contributors). Special thanks to [Graham Campbell](https://github.com/GrahamCampbell) and [Markus Staab](https://github.com/staabm) for continuous participation.
+## License
 
-This software includes [Prettify](https://github.com/google/code-prettify), licensed under Apache License 2.0. It is bundled only as a performance optimization.
+MIT
