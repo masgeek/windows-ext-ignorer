@@ -1,40 +1,38 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Masgeek;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
-use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
-use Composer\Plugin\Capable;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreCommandRunEvent;
 
-final class Plugin implements PluginInterface, EventSubscriberInterface, Capable
+class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterface
 {
-    protected array $ignoredExtensions = ['ext-pcntl', 'ext-posix'];
-
     protected Composer $composer;
-
     protected IOInterface $io;
+
+    /**
+     * Extensions to fake on Windows
+     */
+    protected array $ignoredExtensions = [
+        'ext-pcntl' => '1.0.0',
+        'ext-posix' => '1.0.0',
+    ];
 
     public function activate(Composer $composer, IOInterface $io): void
     {
         $this->composer = $composer;
         $this->io = $io;
-    }
 
-    public function deactivate(Composer $composer, IOInterface $io): void {/**will not implment*/}
-    public function uninstall(Composer $composer, IOInterface $io): void {/**will not implment*/}
+        // Only run on Windows
+        if (!$this->isWindows()) {
+            return;
+        }
 
-    public function getCapabilities(): array
-    {
-        return [
-            CommandProviderCapability::class => CommandProvider::class
-        ];
+        $this->applyPlatformOverrides();
     }
 
     public static function getSubscribedEvents(): array
@@ -50,22 +48,47 @@ final class Plugin implements PluginInterface, EventSubscriberInterface, Capable
             return;
         }
 
-        $commandName = $event->getCommand();
+        $command = $event->getCommand();
+        $this->io->write("<info>➡️  Running Composer Command: $command</info>");
 
-        $this->io->writeError("➡️  Running command: <comment>$commandName</comment>", true, IOInterface::VERBOSE);
-        $this->io->write("<options=bold>========= Masgeek Windows Ext Ignorer =========</>", true, IOInterface::NORMAL);
-        $this->io->write("<info>✅ Detected Windows OS. Ignoring extensions:</info>", true, IOInterface::NORMAL);
-        $this->io->write('<comment>' . implode(', ', $this->ignoredExtensions) . '</comment>', true, IOInterface::VERBOSE);
-        $this->io->debug("<options=bold>=============================================</>" . PHP_EOL);
+        $this->applyPlatformOverrides();
+    }
 
-        $input = $event->getInput();
+    /**
+     * Inject fake extensions into Composer config
+     */
+    protected function applyPlatformOverrides(): void
+    {
+        $config = $this->composer->getConfig();
 
-        $existingIgnores = (array) $input->getOption('ignore-platform-req');
-        $newIgnores = array_unique(array_merge($existingIgnores, $this->ignoredExtensions));
+        $platformOverrides = $config->get('platform') ?? [];
 
-        $input->setOption('ignore-platform-req', $newIgnores);
+        foreach ($this->ignoredExtensions as $ext => $version) {
+            if (!isset($platformOverrides[$ext])) {
+                $platformOverrides[$ext] = $version;
+                $this->io->write("<comment>🛠️  Ignoring missing platform requirement: {$ext}={$version}</comment>");
+            } else {
+                $this->io->write("<info>✔️  {$ext} already set to {$platformOverrides[$ext]}</info>", true, IOInterface::VERBOSE);
+            }
+        }
 
-        $this->io->write("<info>✅ Platform requirements bypassed for: <comment>$commandName</comment></info>", true, IOInterface::NORMAL);
+        $config->merge([
+            'config' => [
+                'platform' => $platformOverrides,
+            ],
+        ]);
+
+        $this->io->write("<info>✅ Platform config updated to spoof missing extensions.</info>");
+    }
+
+    public function deactivate(Composer $composer, IOInterface $io)
+    {
+        // no-op
+    }
+
+    public function uninstall(Composer $composer, IOInterface $io)
+    {
+        // no-op
     }
 
     private function isWindows(): bool
