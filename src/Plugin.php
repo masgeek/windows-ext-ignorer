@@ -91,11 +91,15 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public function deactivate(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin deactivated.</comment>");
+        
+        $this->applyPlatformOverrides();
     }
 
     public function uninstall(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
+        
+        $this->applyPlatformOverrides();
     }
 
     /**
