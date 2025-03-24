@@ -1,0 +1,16 @@
+name: PRReview
+on: [ pull_request ]
+jobs:
+  pr-review:
+    runs-on: ubuntu-24.04
+    concurrency:
+      cancel-in-progress: true
+      group: pr-${{ github.ref }}
+    steps:
+      - name: Approve pull request
+        if: github.actor != 'masgeek'
+        uses: andrewmusgrave/automatic-pull-request-review@0.0.5
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          event: APPROVE
+          body: 'Pull request automatically approved'
