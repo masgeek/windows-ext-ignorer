@@ -3,11 +3,11 @@
 namespace Masgeek;
 
 use Composer\Composer;
+use Composer\EventDispatcher\Event;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
-use Composer\Plugin\PreCommandRunEvent;
 
 class Plugin implements PluginInterface, EventSubscriberInterface
 {
@@ -36,24 +36,18 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PluginEvents::PRE_COMMAND_RUN => ['onPreCommandRun', 1],
+            PluginEvents::INIT => ['onInit'],
         ];
     }
 
-    /**
-     * Event listener for Composer's PRE_COMMAND_RUN event.
-     *
-     * @see getSubscribedEvents() for registration
-     *
-     */
-    public function onPreCommandRun(PreCommandRunEvent $event): void
+    public function onInit(): void
     {
         if (!$this->isWindows()) {
             return;
         }
 
-        $command = $event->getCommand();
-        $this->io->write("<info>➡️  Running Composer Command: $command</info>");
+//        $command = $event->getCommand();
+        $this->io->write("<info>➡️  Running Composer Command: command</info>");
 
         // Get merged extensions (defaults + composer.json extra)
         $this->ignoredExtensions = $this->getIgnoredExtensionsFromComposerJson();
@@ -96,6 +90,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public function uninstall(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
+
     }
 
     /**
