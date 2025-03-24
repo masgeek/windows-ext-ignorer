@@ -3,6 +3,7 @@
 namespace Masgeek;
 
 use Composer\Composer;
+use Composer\EventDispatcher\Event;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginEvents;
@@ -46,7 +47,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @see getSubscribedEvents() for registration
      *
      */
-    public function onPreCommandRun(PreCommandRunEvent $event): void
+    public function onPreCommandRun(Event $event): void
     {
         if (!$this->isWindows()) {
             return;
@@ -96,7 +97,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public function uninstall(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
-        
+
     }
 
     /**
