@@ -1,0 +1,22 @@
+name: TODO
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    concurrency:
+      cancel-in-progress: true
+      group: todo-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Run tdg-github-action
+        uses: ribtoks/tdg-github-action@master
+        with:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          LABEL: "todo-tasks"
