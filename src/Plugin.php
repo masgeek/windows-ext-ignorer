@@ -8,7 +8,6 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
-use Composer\Plugin\PreCommandRunEvent;
 
 class Plugin implements PluginInterface, EventSubscriberInterface
 {
@@ -37,7 +36,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PluginEvents::INIT => ['onPreCommandRun', 1],
+            PluginEvents::INIT => ['onInit', 1],
         ];
     }
 
@@ -47,7 +46,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @see getSubscribedEvents() for registration
      *
      */
-    public function onPreCommandRun(Event $event): void
+    public function onInit(Event $event): void
     {
         if (!$this->isWindows()) {
             return;
