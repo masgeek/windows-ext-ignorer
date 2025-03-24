@@ -1,62 +1,125 @@
 # Windows Extension Ignorer for Composer
 
-A Composer plugin that automatically ignores `ext-pcntl` and `ext-posix` platform requirements on Windows systems.
+A Composer plugin that automatically ignores platform requirements like `ext-pcntl` and `ext-posix` on Windows systems.
 
-## The Problem
+---
 
-Many PHP packages require extensions like `ext-pcntl` and `ext-posix` which are not available on Windows. This forces Windows users to:
+## 🚧 The Problem
 
-1. Manually add the `--ignore-platform-reqs` flag to every Composer command
-2. Set up command aliases
-3. Modify their `composer.json` to exclude these requirements
+Many PHP packages require extensions such as `ext-pcntl` and `ext-posix`—extensions that are **not available** on Windows. As a Windows developer, you're often forced to:
 
-## The Solution
+1. Add the `--ignore-platform-reqs` flag to every Composer command  
+2. Set up custom command aliases  
+3. Modify `composer.json` manually to workaround the missing extensions  
 
-This plugin automatically detects when you're on a Windows system and ignores the `ext-pcntl` and `ext-posix` platform requirements for you. No manual flags or aliases needed!
+---
 
-## Installation
+## ✅ The Solution
+
+This plugin **automatically** detects when you're on a Windows system and **spoofs** the required extensions for you—no flags, no aliases, no extra steps.
+
+It works **out of the box** with sensible defaults (ignoring `ext-pcntl` and `ext-posix`), and you can also **customize** which extensions you want to ignore via `composer.json`!
+
+---
+
+## ⚠️ Production Environment Disclaimer
+
+> **Important:**  
+> This plugin is designed for **development environments on Windows** only.  
+> It should **not** be used in production environments, staging servers, or CI pipelines that require accurate platform checks.  
+>  
+> Ignoring required PHP extensions may cause runtime errors or unexpected behavior in your application. Always ensure your production environment meets the actual extension requirements of your packages.
+
+---
+
+## ⚙️ Installation
+
+It’s recommended to install the plugin as a **development dependency**, since it’s only useful in development environments:
 
 ```bash
-composer require masgeek/windows-ext-ignorer
+composer require --dev masgeek/windows-ext-ignorer
 ```
 
-## Usage
+---
 
-Once installed, the plugin works automatically. When running Composer commands on a Windows system:
+## 🚀 Usage
 
-1. The plugin detects you're on Windows
-2. It automatically removes `ext-pcntl` and `ext-posix` from the platform requirements
-3. You can install packages normally without seeing errors about missing extensions
+Once installed, the plugin **just works** on Windows.
 
-## Verbose Output
+When running any Composer command:
+1. The plugin detects that you're on Windows  
+2. It automatically **injects** the specified extensions into Composer’s platform config  
+3. Composer proceeds without showing errors about missing extensions  
 
-If you want to see when the plugin is active, run your Composer commands with the `-v` flag:
+---
+
+## 🔧 Customizing Ignored Extensions
+
+By default, the plugin injects these extensions into Composer’s `platform` config:
+- `ext-pcntl`: `1.0.0`
+- `ext-posix`: `1.0.0`
+
+If you want to ignore additional (or different) extensions, you can specify them in your `composer.json` file under the `extra` section.
+
+### Example `composer.json` Configuration:
+```json
+{
+  "extra": {
+    "ignored-extensions": {
+      "ext-pcntl": "1.0.0",
+      "ext-posix": "1.0.0",
+      "ext-sockets": "1.0.0"
+    }
+  }
+}
+```
+
+You can specify **any** extensions that are not supported or available in your Windows environment.
+
+---
+
+## 🖥️ Verbose Output
+
+To see the plugin in action, run Composer with the `-v` or `-vvv` flag:
 
 ```bash
-composer require some/package -v
+composer require some/package -vvv
 ```
 
-You'll see messages like:
+Example output:
 
 ```
-WindowsExtIgnorer: Automatically ignoring ext-pcntl requirement on Windows
-WindowsExtIgnorer: Automatically ignoring ext-posix requirement on Windows
-WindowsExtIgnorer: Platform requirements modified for Windows
+➡️  Running Composer Command: require
+🔧 Found ignored-extensions in composer.json: {"ext-pcntl":"1.0.0","ext-posix":"1.0.0","ext-sockets":"1.0.0"}
+🛠️  Ignoring missing platform requirement: ext-pcntl=1.0.0
+🛠️  Ignoring missing platform requirement: ext-posix=1.0.0
+🛠️  Ignoring missing platform requirement: ext-sockets=1.0.0
+✅ Platform config updated to spoof missing extensions.
 ```
 
-## How It Works
+---
 
-The plugin:
+## ⚙️ How It Works
 
-1. Subscribes to Composer's `pre-pool-create` event
-2. Checks if the current system is Windows
-3. If on Windows, it removes the specified extensions from the platform repository
-4. This allows packages that require these extensions to install normally
+1. Subscribes to Composer’s `pre-command-run` event  
+2. Detects if the OS is Windows  
+3. If true, it merges default and `composer.json` configured ignored extensions  
+4. It updates Composer’s `platform` config at runtime  
+5. After Composer runs, the overrides are cleared (no changes are persisted to your files)
 
-## Customization
+---
 
-If you want to ignore additional extensions, you can fork this plugin and modify the `$ignoredExtensions` array in the `WindowsExtIgnorerPlugin` class.
+## ❓ FAQ
 
-## License
+**Q:** Will this modify my `composer.json`?  
+**A:** No. It temporarily adjusts Composer’s internal configuration and does **not** write to your `composer.json` file.
 
-MIT
+**Q:** Can I use this on Linux or Mac?  
+**A:** No. The plugin only activates on Windows (`PHP_OS_FAMILY === 'Windows'`). On other operating systems, it does nothing.
+
+---
+
+## 📝 License
+
+MIT License  
+Author: Sammy Barasa  
