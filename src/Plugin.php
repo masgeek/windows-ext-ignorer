@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Masgeek;
 
 use Composer\Composer;
@@ -11,13 +13,12 @@ use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreCommandRunEvent;
 
-class Plugin implements PluginInterface, EventSubscriberInterface, Capable
+final class Plugin implements PluginInterface, EventSubscriberInterface, Capable
 {
-
     /**
-     * Extensions to ignore on Windows platforms
+     * Extensions to ignore on Windows platforms.
      *
-     * @var array
+     * @var string[]
      */
     protected array $ignoredExtensions = ['ext-pcntl', 'ext-posix'];
 
@@ -31,9 +32,20 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
         $this->io = $io;
     }
 
+    public function deactivate(Composer $composer, IOInterface $io): void
+    {
+        // No implementation needed
+    }
+
+    public function uninstall(Composer $composer, IOInterface $io): void
+    {
+        // No implementation needed
+    }
 
     /**
-     * @return string[]
+     * Capabilities provided by this plugin.
+     *
+     * @return array<string, string>
      */
     public function getCapabilities(): array
     {
@@ -42,6 +54,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
         ];
     }
 
+    /**
+     * Subscribed events.
+     *
+     * @return array<string, array{0: string, 1?: int}>
+     */
     public static function getSubscribedEvents(): array
     {
         return [
@@ -49,31 +66,38 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
         ];
     }
 
-    public function deactivate(Composer $composer, IOInterface $io)
-    {
-        //no implementation
-    }
-
-    public function uninstall(Composer $composer, IOInterface $io)
-    {
-        //no implementation
-    }
-
     /**
-     * @param PreCommandRunEvent $event
-     * @return void
+     * Handles the pre-command-run event.
      */
     public function onPreCommandRun(PreCommandRunEvent $event): void
     {
-        // Only apply on Windows systems
-        if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+        if (!$this->isWindows()) {
             return;
         }
 
         $commandName = $event->getCommand();
-        $this->io->writeError("Command running is $commandName");
-        $this->io->write(PHP_EOL . '<options=bold>========= Demo plugin =========</>');
-        $this->io->write('<info>Congrats, your plugin works! :)</info>');
-        $this->io->write('<options=bold>===============================</>' . PHP_EOL);
+
+        $this->io->writeError("➡️  Running command: <comment>$commandName</comment>", true, IOInterface::VERBOSE);
+        $this->io->write("<options=bold>========= IgnorePcntlPlugin =========</>", true, IOInterface::NORMAL);
+        $this->io->write("<info>✅ Detected Windows OS. Automatically ignoring platform requirements:</info>", true, IOInterface::NORMAL);
+        $this->io->write('<comment>' . implode(', ', $this->ignoredExtensions) . '</comment>', true, IOInterface::VERBOSE);
+        $this->io->debug("<options=bold>====================================</>" . PHP_EOL);
+
+        $input = $event->getInput();
+
+        $existingIgnores = (array)$input->getOption('ignore-platform-req');
+        $newIgnores = array_unique(array_merge($existingIgnores, $this->ignoredExtensions));
+
+        $input->setOption('ignore-platform-req', $newIgnores);
+
+        $this->io->write("<info>✅ Platform requirements successfully bypassed for $commandName!</info>", true, IOInterface::NORMAL);
+    }
+
+    /**
+     * Check if the OS is Windows.
+     */
+    private function isWindows(): bool
+    {
+        return PHP_OS_FAMILY === 'Windows';
     }
 }
