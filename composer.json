@@ -1,0 +1,27 @@
+{
+    "name": "masgeek/windows-ext-ignorer",
+    "description": "Composer plugin to ignore pcntl/posix platform reqs on Windows",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sammy Barasa",
+            "email": "barsamms@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.2 || ^8.0",
+        "composer-plugin-api": "^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Masgeek\\": "src/"
+        }
+    },
+    "extra": {
+        "class": "Masgeek\\Plugin"
+    }
+}
