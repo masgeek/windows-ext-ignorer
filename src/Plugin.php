@@ -36,24 +36,18 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PluginEvents::INIT => ['onInit', 1],
+            PluginEvents::INIT => ['onInit'],
         ];
     }
 
-    /**
-     * Event listener for Composer's PRE_COMMAND_RUN event.
-     *
-     * @see getSubscribedEvents() for registration
-     *
-     */
-    public function onInit(Event $event): void
+    public function onInit(): void
     {
         if (!$this->isWindows()) {
             return;
         }
 
-        $command = $event->getCommand();
-        $this->io->write("<info>➡️  Running Composer Command: $command</info>");
+//        $command = $event->getCommand();
+        $this->io->write("<info>➡️  Running Composer Command: command</info>");
 
         // Get merged extensions (defaults + composer.json extra)
         $this->ignoredExtensions = $this->getIgnoredExtensionsFromComposerJson();
