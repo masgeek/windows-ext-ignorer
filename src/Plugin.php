@@ -37,6 +37,7 @@ class WindowsExtIgnorerPlugin implements PluginInterface, EventSubscriberInterfa
 
     public static function getSubscribedEvents(): array
     {
+        return [];
         return [
             PluginEvents::PRE_COMMAND_RUN => ['onPreCommandRun', 1],
         ];
