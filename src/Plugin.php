@@ -36,7 +36,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PluginEvents::PRE_COMMAND_RUN => ['onPreCommandRun', 1],
+            PluginEvents::INIT => ['onPreCommandRun', 1],
         ];
     }
 
@@ -91,15 +91,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public function deactivate(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin deactivated.</comment>");
-        
-        $this->applyPlatformOverrides();
     }
 
     public function uninstall(Composer $composer, IOInterface $io): void
     {
         $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
         
-        $this->applyPlatformOverrides();
     }
 
     /**
