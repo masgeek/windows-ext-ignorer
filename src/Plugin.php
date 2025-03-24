@@ -3,13 +3,13 @@
 namespace Masgeek;
 
 use Composer\Composer;
-use Composer\EventDispatcher\Event;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
+use Composer\Plugin\PreCommandRunEvent;
 
 class Plugin implements PluginInterface, EventSubscriberInterface, Capable
 {
@@ -60,17 +60,17 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
     }
 
     /**
-     * @param Event $event
+     * @param PreCommandRunEvent $event
      * @return void
      */
-    public function onPreCommandRun(Event $event): void
+    public function onPreCommandRun(PreCommandRunEvent $event): void
     {
         // Only apply on Windows systems
         if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
             return;
         }
 
-        $commandName = $event->getCommandName();
+        $commandName = $event->getCommand();
         $this->io->writeError("Command running is $commandName");
         $this->io->write(PHP_EOL . '<options=bold>========= Demo plugin =========</>');
         $this->io->write('<info>Congrats, your plugin works! :)</info>');
