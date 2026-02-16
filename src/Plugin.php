@@ -11,26 +11,26 @@ use Composer\Plugin\PluginInterface;
 
 class Plugin implements PluginInterface, EventSubscriberInterface
 {
-    protected Composer $composer;
-    protected IOInterface $io;
+    private Composer $composer;
+    private IOInterface $io;
 
-    protected array $defaultIgnoredExtensions = [
+    /** @var array<string,string> */
+    private array $defaultIgnoredExtensions = [
         'ext-pcntl' => '1.0.0',
         'ext-posix' => '1.0.0',
     ];
-    protected array $ignoredExtensions = [];
+
+    /** @var array<string,string> */
+    private array $ignoredExtensions = [];
 
     public function activate(Composer $composer, IOInterface $io): void
     {
         $this->composer = $composer;
         $this->io = $io;
 
-        // Only run on Windows
-        if (!$this->isWindows()) {
-            return;
+        if ($this->isWindows()) {
+            $this->applyPlatformOverrides();
         }
-
-        $this->applyPlatformOverrides();
     }
 
     public static function getSubscribedEvents(): array
@@ -40,34 +40,30 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         ];
     }
 
-    public function onInit(): void
+    public function onInit(Event $event): void
     {
         if (!$this->isWindows()) {
             return;
         }
 
-//        $command = $event->getCommand();
-        $this->io->write("<info>➡️  Running Composer Command: command</info>");
+        $this->io->write("<info>➡️  Initializing Windows extension overrides</info>");
 
-        // Get merged extensions (defaults + composer.json extra)
         $this->ignoredExtensions = $this->getIgnoredExtensionsFromComposerJson();
-
         $this->applyPlatformOverrides();
     }
 
     /**
-     * Inject fake extensions into Composer config
+     * Inject fake extensions into Composer config to bypass missing requirements.
      */
-    protected function applyPlatformOverrides(): void
+    private function applyPlatformOverrides(): void
     {
         $config = $this->composer->getConfig();
-
         $platformOverrides = $config->get('platform') ?? [];
 
         foreach ($this->ignoredExtensions as $ext => $version) {
             if (!isset($platformOverrides[$ext])) {
                 $platformOverrides[$ext] = $version;
-                $this->io->write("<comment>🛠️  Ignoring missing platform requirement: {$ext}={$version}</comment>");
+                $this->io->write("<comment>🛠️  Spoofing missing extension: {$ext}={$version}</comment>");
             } else {
                 $this->io->write("<info>✔️  {$ext} already set to {$platformOverrides[$ext]}</info>", true, IOInterface::VERBOSE);
             }
@@ -79,24 +75,25 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             ],
         ]);
 
-        $this->io->write("<info>✅ Platform config updated to spoof missing extensions.</info>");
+        $this->io->write("<info>✅ Platform config updated successfully.</info>");
     }
 
     public function deactivate(Composer $composer, IOInterface $io): void
     {
-        $this->io->write("<comment>WindowsExtIgnorerPlugin deactivated.</comment>");
+        $io->write("<comment>WindowsExtIgnorerPlugin deactivated.</comment>");
     }
 
     public function uninstall(Composer $composer, IOInterface $io): void
     {
-        $this->io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
-
+        $io->write("<comment>WindowsExtIgnorerPlugin uninstalled.</comment>");
     }
 
     /**
-     * Reads `extra` config from composer.json and merges it with defaults.
+     * Reads `extra.ignored-extensions` from composer.json and merges with defaults.
+     *
+     * @return array<string,string>
      */
-    protected function getIgnoredExtensionsFromComposerJson(): array
+    private function getIgnoredExtensionsFromComposerJson(): array
     {
         $extraConfig = $this->composer->getPackage()->getExtra();
         $composerJsonExtensions = [];
