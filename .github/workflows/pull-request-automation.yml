@@ -2,7 +2,7 @@ name: PRReview
 on: [ pull_request ]
 jobs:
   pr-review:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     concurrency:
       cancel-in-progress: true
       group: pr-${{ github.ref }}
