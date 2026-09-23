@@ -7,14 +7,14 @@ on:
 
 jobs:
   bump-tag-version:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     concurrency:
       cancel-in-progress: true
       group: bump-version-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Generate Tag
         id: tag_version
         uses: masgeek/github-tag-action@release
